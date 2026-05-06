@@ -40,20 +40,30 @@ msg_info "Setting up Sweet Home 3D Online"
 mkdir -p /opt/sweethome3d
 cd /opt/sweethome3d
 
-# Clone the repository or download files
-msg_info "Downloading Sweet Home 3D Online files"
-REPO_URL="https://github.com/YOUR_USERNAME/sweethome3d-docker.git"
-# For now, we'll create the structure manually since we don't have a repo yet
-# $STD git clone $REPO_URL /opt/sweethome3d
+# Download files from GitHub repository
+msg_info "Downloading Sweet Home 3D Online files from GitHub"
+GITHUB_RAW="https://raw.githubusercontent.com/andry360/sweethome3d-docker/main"
 
 # Create directory structure
 mkdir -p docker homes
 
-# Download or copy Dockerfile, docker-compose.yml, etc.
-# This assumes the files are available from a repository or CDN
-# For testing, you can manually copy them
+# Download main files
+$STD wget -O Dockerfile "${GITHUB_RAW}/Dockerfile"
+$STD wget -O docker-compose.yml "${GITHUB_RAW}/docker-compose.yml"
+$STD wget -O .env.example "${GITHUB_RAW}/.env.example"
 
-msg_ok "Sweet Home 3D Online files prepared"
+# Download docker configuration files
+$STD wget -O docker/apache-config.conf "${GITHUB_RAW}/docker/apache-config.conf"
+$STD wget -O docker/htaccess.conf "${GITHUB_RAW}/docker/htaccess.conf"
+$STD wget -O docker/entrypoint.sh "${GITHUB_RAW}/docker/entrypoint.sh"
+chmod +x docker/entrypoint.sh
+
+# Download optional scripts
+$STD wget -O backup-homes.sh "${GITHUB_RAW}/backup-homes.sh"
+$STD wget -O restore-homes.sh "${GITHUB_RAW}/restore-homes.sh"
+chmod +x backup-homes.sh restore-homes.sh
+
+msg_ok "Sweet Home 3D Online files downloaded"
 
 # Configuration prompts
 read -r -p "${TAB3}Enter port for Sweet Home 3D (default: 8080): " HOST_PORT

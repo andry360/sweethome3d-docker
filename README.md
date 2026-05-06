@@ -37,13 +37,13 @@ Self-hosted deployment of **Sweet Home 3D 7.7-Online**, the web-based 3D home de
 **Basic installation:**
 
 ```bash
-bash -c "$(wget -qLO - https://raw.githubusercontent.com/andry360/sweethome3d-docker/main/ct/sweethome3d.sh)"
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/andry360/sweethome3d-docker/refs/heads/main/ct/sweethome3d.sh)"
 ```
 
 **With custom authentication credentials:**
 
 ```bash
-SH3D_AUTH_USERNAME=myuser SH3D_AUTH_PASSWORD='MyStr0ng!P@ssw0rd' bash -c "$(wget -qLO - https://raw.githubusercontent.com/andry360/sweethome3d-docker/main/ct/sweethome3d.sh)"
+SH3D_AUTH_USERNAME=myuser SH3D_AUTH_PASSWORD='MyStr0ng!P@ssw0rd' bash -c "$(wget -qLO - https://raw.githubusercontent.com/andry360/sweethome3d-docker/refs/heads/main/ct/sweethome3d.sh)"
 ```
 
 ⚠️ **Security Note:** When enabling authentication, either:

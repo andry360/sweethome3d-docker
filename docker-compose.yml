@@ -3,8 +3,8 @@ version: '3.8'
 services:
   sweethome3d:
     build:
-      context: ..
-      dockerfile: sweethome3d-docker/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     image: sweethome3d-online:${VERSION:-7.7}
     container_name: sweethome3d-online
     restart: unless-stopped
@@ -24,7 +24,7 @@ services:
       # Authentication (optional)
       - AUTH_ENABLED=${AUTH_ENABLED:-false}
       - AUTH_USERNAME=${AUTH_USERNAME:-admin}
-      - AUTH_PASSWORD=${AUTH_PASSWORD:-changeme}
+      - AUTH_PASSWORD=${AUTH_PASSWORD}
     
     volumes:
       # Storage for saved homes

@@ -1,39 +1,50 @@
 # Sweet Home 3D 7.7-Online - Multi-stage Docker Build
+# Downloads sources from SourceForge and builds automatically
+
 # Stage 1: Build Environment (Compile Java to JavaScript with JSweet)
 FROM eclipse-temurin:11-jdk as builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
     ant \
-    git \
     wget \
     unzip \
+    subversion \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /build
 
-# Copy source files
-COPY SweetHome3D-7.7-Online/sweethome3d-code-r9047-branches-develop-SweetHome3D-7.7-Online-SweetHome3DJS /build/
+# Download Sweet Home 3D 7.7-Online source from SourceForge using SVN
+# This is the most reliable method to get the exact source code
+RUN echo "Downloading Sweet Home 3D 7.7-Online sources from SourceForge..." && \
+    svn export https://svn.code.sf.net/p/sweethome3d/code/branches/develop-SweetHome3D-7.7-Online/SweetHome3DJS /build
 
 # Build the application
-RUN ant applicationDistribution
+RUN echo "Building Sweet Home 3D 7.7-Online (this may take 10-20 minutes)..." && \
+    ant applicationDistribution
 
 # Prepare deployment files
 RUN mkdir -p /deploy && \
     cp -r deployDirectHomeRecorder/* /deploy/ && \
     cp -r dist/* /deploy/ && \
-    cp -r lib/*.min.js /deploy/lib/ && \
-    cp -r lib/*.css /deploy/lib/
+    cp -r lib/*.min.js /deploy/lib/ 2>/dev/null || true && \
+    cp -r lib/*.css /deploy/lib/ 2>/dev/null || true
 
 # Stage 2: Runtime Environment (PHP + Apache)
 FROM php:8.2-apache
+
+LABEL maintainer="andrea.castellano"
+LABEL description="Sweet Home 3D 7.7-Online - Self-hosted 3D home design application"
+LABEL version="7.7"
 
 # Install PHP extensions and utilities
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
     unzip \
+    curl \
+    apache2-utils \
     && docker-php-ext-install zip \
     && rm -rf /var/lib/apt/lists/*
 
@@ -62,6 +73,10 @@ RUN chown -R www-data:www-data /var/www/html && \
 COPY docker/htaccess.conf /var/www/html/.htaccess
 COPY docker/apache-config.conf /etc/apache2/sites-available/000-default.conf
 
+# Copy entrypoint script
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # Expose port
 EXPOSE 80
 
@@ -69,5 +84,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost/ || exit 1
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Use custom entrypoint for dynamic configuration
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
