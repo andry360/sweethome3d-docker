@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  sweethome3d:
+    build:
+      context: ..
+      dockerfile: sweethome3d-docker/Dockerfile
+    image: sweethome3d-online:${VERSION:-7.7}
+    container_name: sweethome3d-online
+    restart: unless-stopped
+    
+    ports:
+      - "${HOST_PORT:-8080}:80"
+    
+    environment:
+      # PHP Configuration
+      - UPLOAD_MAX_FILESIZE=${UPLOAD_MAX_FILESIZE:-50M}
+      - POST_MAX_SIZE=${POST_MAX_SIZE:-50M}
+      - MEMORY_LIMIT=${MEMORY_LIMIT:-256M}
+      
+      # Sweet Home 3D Configuration
+      - SH3D_STORAGE_PATH=/var/www/html/homes
+      
+      # Authentication (optional)
+      - AUTH_ENABLED=${AUTH_ENABLED:-false}
+      - AUTH_USERNAME=${AUTH_USERNAME:-admin}
+      - AUTH_PASSWORD=${AUTH_PASSWORD:-changeme}
+    
+    volumes:
+      # Storage for saved homes
+      - ${STORAGE_PATH:-./homes}:/var/www/html/homes
+      
+      # Optional: Custom PHP configuration
+      # - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+      
+      # Optional: Custom Apache configuration
+      # - ./docker/apache-config.conf:/etc/apache2/sites-available/000-default.conf
+    
+    networks:
+      - sweethome3d_network
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "traefik.enable=false"
+
+networks:
+  sweethome3d_network:
+    driver: bridge
+
+volumes:
+  homes:
+    driver: local

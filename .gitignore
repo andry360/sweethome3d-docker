@@ -1,0 +1,28 @@
+# Sweet Home 3D Docker - Ignore files
+
+# Environment configuration
+.env
+
+# Docker volumes and data
+homes/
+backups/
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp

@@ -1,0 +1,103 @@
+# Sweet Home 3D 7.7-Online - Multi-stage Docker Build
+# Alternative version - Downloads source from SourceForge
+
+# Stage 1: Build Environment (Compile Java to JavaScript with JSweet)
+FROM eclipse-temurin:11-jdk as builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    ant \
+    wget \
+    unzip \
+    subversion \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /build
+
+# Download Sweet Home 3D 7.7-Online source from SourceForge
+# Note: Adjust URL based on actual SourceForge structure
+RUN echo "Downloading Sweet Home 3D 7.7-Online sources..." && \
+    wget -O sweethome3d-src.tar.gz \
+    "https://sourceforge.net/p/sweethome3d/code/HEAD/tarball?path=/branches/develop-SweetHome3D-7.7-Online/SweetHome3DJS" && \
+    tar -xzf sweethome3d-src.tar.gz && \
+    mv sweethome3d-code-*/SweetHome3DJS/* . && \
+    rm -rf sweethome3d-src.tar.gz sweethome3d-code-*
+
+# Alternative: Clone with SVN (if tar.gz doesn't work)
+# RUN svn export https://svn.code.sf.net/p/sweethome3d/code/branches/develop-SweetHome3D-7.7-Online/SweetHome3DJS /build
+
+# Build the application
+RUN ant applicationDistribution || \
+    (echo "Build failed - checking if pre-built files exist" && \
+     test -d deployDirectHomeRecorder && \
+     echo "Using existing deployment files")
+
+# Prepare deployment files
+RUN mkdir -p /deploy && \
+    if [ -d dist ]; then \
+        cp -r deployDirectHomeRecorder/* /deploy/ && \
+        cp -r dist/* /deploy/ && \
+        cp -r lib/*.min.js /deploy/lib/ && \
+        cp -r lib/*.css /deploy/lib/; \
+    else \
+        echo "No dist directory, using deployDirectHomeRecorder as-is" && \
+        cp -r deployDirectHomeRecorder/* /deploy/ && \
+        cp -r lib /deploy/; \
+    fi
+
+# Stage 2: Runtime Environment (PHP + Apache)
+FROM php:8.2-apache
+
+LABEL maintainer="andrea.castellano"
+LABEL description="Sweet Home 3D 7.7-Online - Self-hosted 3D home design application"
+LABEL version="7.7"
+
+# Install PHP extensions and utilities
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    zip \
+    unzip \
+    curl \
+    && docker-php-ext-install zip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure PHP upload limits (can be overridden via env vars)
+RUN { \
+        echo 'upload_max_filesize = 50M'; \
+        echo 'post_max_size = 50M'; \
+        echo 'memory_limit = 256M'; \
+        echo 'max_execution_time = 300'; \
+    } > /usr/local/etc/php/conf.d/uploads.ini
+
+# Enable Apache modules
+RUN a2enmod rewrite headers
+
+# Copy application files from builder stage
+COPY --from=builder /deploy /var/www/html/
+
+# Create storage directory for saved homes
+RUN mkdir -p /var/www/html/homes && \
+    chown -R www-data:www-data /var/www/html && \
+    chmod 755 /var/www/html/homes
+
+# Copy Apache configuration (if exists)
+# These files will be created by docker-compose or copied manually
+COPY --chown=www-data:www-data docker/apache-config.conf /etc/apache2/sites-available/000-default.conf || true
+COPY --chown=www-data:www-data docker/htaccess.conf /var/www/html/.htaccess || true
+
+# Create a simple .htaccess if not copied
+RUN if [ ! -f /var/www/html/.htaccess ]; then \
+        echo "# Sweet Home 3D .htaccess" > /var/www/html/.htaccess && \
+        echo "RewriteEngine On" >> /var/www/html/.htaccess; \
+    fi
+
+# Expose port
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
+
+# Start Apache
+CMD ["apache2-foreground"]
