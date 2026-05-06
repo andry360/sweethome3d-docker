@@ -43,7 +43,7 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/andry360/sweethome3d-do
 **With custom authentication credentials:**
 
 ```bash
-SH3D_AUTH_USERNAME=admin SH3D_AUTH_PASSWORD='2'oAS5VY' bash -c "$(wget -qLO - https://raw.githubusercontent.com/andry360/sweethome3d-docker/main/ct/sweethome3d.sh)"
+SH3D_AUTH_USERNAME=myuser SH3D_AUTH_PASSWORD='MyStr0ng!P@ssw0rd' bash -c "$(wget -qLO - https://raw.githubusercontent.com/andry360/sweethome3d-docker/main/ct/sweethome3d.sh)"
 ```
 
 ⚠️ **Security Note:** When enabling authentication, either:
