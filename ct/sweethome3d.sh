@@ -42,6 +42,16 @@ function update_script() {
 start
 build_container
 
+# Docker requires keyctl and nesting features in unprivileged LXC containers.
+# Without these, Docker cannot mount overlay filesystems (exit code 1 / Operation not permitted).
+msg_info "Configuring LXC for Docker support"
+pct set "$CTID" --features "keyctl=1,nesting=1"
+pct stop "$CTID"
+sleep 2
+pct start "$CTID"
+sleep 3
+msg_ok "LXC configured for Docker"
+
 # Download install script to temp file on Proxmox host, inject credentials,
 # then push+exec inside container.
 # NOTE: pct exec does NOT support heredoc stdin redirect (causes exit code 127).
