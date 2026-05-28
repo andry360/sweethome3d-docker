@@ -24,7 +24,8 @@ WORKDIR /build
 # Cache buster can be used with: --build-arg CACHE_BUSTER=$(date +%s)
 RUN echo "Downloading Sweet Home 3D 7.7-Online sources from SourceForge..." && \
     svn export --non-interactive --trust-server-cert-failures=unknown-ca \
-    https://svn.code.sf.net/p/sweethome3d/code/branches/develop-SweetHome3D-7.7-Online/SweetHome3DJS /build
+    https://svn.code.sf.net/p/sweethome3d/code/branches/develop-SweetHome3D-7.7-Online/SweetHome3DJS /src && \
+    cp -r /src/. /build/ && rm -rf /src
 
 # Build the application
 RUN echo "Building Sweet Home 3D 7.7-Online (this may take 10-20 minutes)..." && \
