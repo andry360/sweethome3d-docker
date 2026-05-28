@@ -123,11 +123,16 @@ AUTH_PASSWORD=${AUTH_PASSWORD}
 EOF
 msg_ok "Configuration file created"
 
-# Create storage directory
+# Create storage directory with proper permissions
 msg_info "Creating storage directory"
 mkdir -p "${STORAGE_PATH}"
-chmod 755 "${STORAGE_PATH}"
-msg_ok "Storage directory created"
+# Set permissions to 775 to allow write by www-data in container
+chmod 775 "${STORAGE_PATH}"
+# Ensure ownership (best effort - will be fixed in container)
+if id www-data &>/dev/null; then
+  chown www-data:www-data "${STORAGE_PATH}" 2>/dev/null || true
+fi
+msg_ok "Storage directory created with permissions 775"
 
 msg_info "Building Docker image (this may take several minutes)"
 $STD docker-compose build

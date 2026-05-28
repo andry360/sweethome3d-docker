@@ -1,10 +1,26 @@
 #!/bin/bash
 # Sweet Home 3D Docker Entrypoint Script
-# Handles dynamic authentication configuration
+# Handles dynamic authentication configuration and PHP/Apache setup
 
 set -e
 
+# Enable debug mode if DEBUG env var is set
+if [ "${DEBUG}" = "true" ]; then
+    set -x
+fi
+
 echo "🚀 Starting Sweet Home 3D 7.7-Online..."
+
+# Validate critical directories
+if [ ! -d "/var/www/html" ]; then
+    echo "❌ ERROR: /var/www/html directory not found"
+    exit 1
+fi
+
+if [ ! -d "/var/www/html/homes" ]; then
+    echo "⚠️  Creating homes directory..."
+    mkdir -p /var/www/html/homes
+fi
 
 # Configure authentication if enabled
 if [ "${AUTH_ENABLED}" = "true" ]; then

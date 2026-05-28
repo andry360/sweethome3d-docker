@@ -1,11 +1,14 @@
 # Makefile for Sweet Home 3D Docker
 
-.PHONY: help build build-sf start stop restart logs clean backup restore test
+.PHONY: help build build-sf start stop restart logs clean backup restore test init check preflight
 
 # Default target
 help:
 	@echo "Sweet Home 3D Docker - Available commands:"
 	@echo ""
+	@echo "  make check      - Run pre-flight checks before deployment"
+	@echo "  make preflight  - Alias for 'make check'"
+	@echo "  make init       - Initialize environment (.env, directories)"
 	@echo "  make build      - Build Docker image from local sources"
 	@echo "  make build-sf   - Build Docker image from SourceForge"
 	@echo "  make start      - Start containers"
@@ -17,6 +20,10 @@ help:
 	@echo "  make restore    - Restore user projects from backup"
 	@echo "  make test       - Run quick test"
 	@echo ""
+
+# Pre-flight checks
+check preflight:
+	@bash preflight-check.sh
 
 # Build image from local sources
 build:

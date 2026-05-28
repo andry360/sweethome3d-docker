@@ -27,14 +27,22 @@ services:
       - AUTH_PASSWORD=${AUTH_PASSWORD}
     
     volumes:
-      # Storage for saved homes
-      - ${STORAGE_PATH:-./homes}:/var/www/html/homes
+      # Storage for saved homes (bind mount with proper propagation)
+      - type: bind
+        source: ${STORAGE_PATH:-./homes}
+        target: /var/www/html/homes
+        bind:
+          propagation: rprivate
       
       # Optional: Custom PHP configuration
-      # - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+      # - type: bind
+      #   source: ./docker/php.ini
+      #   target: /usr/local/etc/php/conf.d/custom.ini
       
       # Optional: Custom Apache configuration
-      # - ./docker/apache-config.conf:/etc/apache2/sites-available/000-default.conf
+      # - type: bind
+      #   source: ./docker/apache-config.conf
+      #   target: /etc/apache2/sites-available/000-default.conf
     
     networks:
       - sweethome3d_network
