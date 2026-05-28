@@ -39,7 +39,9 @@ msg_info "Installing Docker"
 DOCKER_CONFIG_PATH='/etc/docker/daemon.json'
 mkdir -p $(dirname $DOCKER_CONFIG_PATH)
 echo -e '{\n  "log-driver": "journald"\n}' >/etc/docker/daemon.json
-$STD sh <(curl -fsSL https://get.docker.com)
+curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+$STD bash /tmp/get-docker.sh
+rm -f /tmp/get-docker.sh
 msg_ok "Installed Docker"
 
 msg_info "Installing Docker Compose"
