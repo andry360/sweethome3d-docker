@@ -46,9 +46,6 @@ msg_ok "Installed Docker"
 
 msg_info "Installing Docker Compose"
 $STD apt-get install -y docker-compose-plugin
-# Create shim so legacy 'docker-compose' calls work alongside 'docker compose'
-printf '#!/bin/sh\nexec docker compose "$@"\n' > /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
 DOCKER_COMPOSE_VERSION=$(docker compose version --short 2>/dev/null || echo "unknown")
 msg_ok "Installed Docker Compose ${DOCKER_COMPOSE_VERSION}"
 
@@ -160,18 +157,18 @@ fi
 msg_ok "Storage directory created with permissions 775"
 
 msg_info "Building Docker image (this may take several minutes)"
-$STD docker-compose build
+$STD docker compose build
 msg_ok "Docker image built"
 
 msg_info "Starting Sweet Home 3D Online"
-$STD docker-compose up -d
+$STD docker compose up -d
 msg_ok "Sweet Home 3D Online started"
 
 # Wait for container to be healthy
 msg_info "Waiting for Sweet Home 3D to be ready"
 sleep 10
 for i in {1..30}; do
-  if docker-compose ps | grep -q "Up"; then
+  if docker compose ps | grep -q "Up"; then
     break
   fi
   sleep 2
