@@ -45,10 +45,12 @@ rm -f /tmp/get-docker.sh
 msg_ok "Installed Docker"
 
 msg_info "Installing Docker Compose"
-DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)
-$STD curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+$STD apt-get install -y docker-compose-plugin
+# Create shim so legacy 'docker-compose' calls work alongside 'docker compose'
+printf '#!/bin/sh\nexec docker compose "$@"\n' > /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
-msg_ok "Installed Docker Compose $DOCKER_COMPOSE_VERSION"
+DOCKER_COMPOSE_VERSION=$(docker compose version --short 2>/dev/null || echo "unknown")
+msg_ok "Installed Docker Compose ${DOCKER_COMPOSE_VERSION}"
 
 msg_info "Setting up Sweet Home 3D Online"
 mkdir -p /opt/sweethome3d
