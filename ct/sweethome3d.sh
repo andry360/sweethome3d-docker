@@ -94,6 +94,6 @@ if [[ -n "${SH3D_AUTH_USERNAME}" ]]; then
 fi
 echo -e ""
 echo -e "${INFO}${YW}Useful commands (run on Proxmox node):${CL}"
-echo -e "${TAB}${GATEWAY}Status:  pct exec ${CTID} -- bash -c 'cd /opt/sweethome3d && docker-compose ps'${CL}"
-echo -e "${TAB}${GATEWAY}Logs:    pct exec ${CTID} -- bash -c 'cd /opt/sweethome3d && docker-compose logs -f'${CL}"
-echo -e "${TAB}${GATEWAY}Restart: pct exec ${CTID} -- bash -c 'cd /opt/sweethome3d && docker-compose restart'${CL}"
+echo -e "${TAB}${GATEWAY}Status:  pct exec ${CTID} -- bash -c 'cd /opt/sweethome3d && docker compose ps'${CL}"
+echo -e "${TAB}${GATEWAY}Logs:    pct exec ${CTID} -- bash -c 'cd /opt/sweethome3d && docker compose logs -f'${CL}"
+echo -e "${TAB}${GATEWAY}Restart: pct exec ${CTID} -- bash -c 'cd /opt/sweethome3d && docker compose restart'${CL}"
