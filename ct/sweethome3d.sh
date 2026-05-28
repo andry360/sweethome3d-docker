@@ -52,6 +52,10 @@ curl -fsSL \
   "https://raw.githubusercontent.com/andry360/sweethome3d-docker/main/install/sweethome3d-install.sh" \
   -o "${INSTALL_TMP}"
 
+# Hotfix: sh <(curl...) fails on Debian 13 (sh=dash, no process substitution support).
+# Replace with curl-to-file + bash pattern.
+sed -i 's|sh <(curl -fsSL https://get\.docker\.com)|curl -fsSL https://get.docker.com -o /tmp/get-docker.sh \&\& bash /tmp/get-docker.sh \&\& rm -f /tmp/get-docker.sh|g' "${INSTALL_TMP}"
+
 # Prepend credentials export so they are available inside the container
 sed -i "1a export SH3D_AUTH_USERNAME='${SH3D_AUTH_USERNAME}'" "${INSTALL_TMP}"
 sed -i "2a export SH3D_AUTH_PASSWORD='${SH3D_AUTH_PASSWORD}'" "${INSTALL_TMP}"
