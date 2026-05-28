@@ -5,13 +5,25 @@
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://www.sweethome3d.com/
 
-source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
-color
-verb_ip6
-catch_errors
-setting_up_container
-network_check
-update_os
+# Standalone fallback when NOT called via community-scripts framework (e.g. pct exec)
+if [[ -z "$FUNCTIONS_FILE_PATH" ]]; then
+  STD=""
+  function msg_info() { echo -e " [INFO] $1"; }
+  function msg_ok()   { echo -e " [ OK ] $1"; }
+  function msg_error(){ echo -e " [ERR] $1" >&2; exit 1; }
+  TAB3="   "
+  RD='\033[0;31m'
+  GN='\033[0;32m'
+  CL='\033[0m'
+else
+  source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
+  color
+  verb_ip6
+  catch_errors
+  setting_up_container
+  network_check
+  update_os
+fi
 
 msg_info "Installing Dependencies"
 $STD apt-get install -y \
@@ -65,8 +77,12 @@ chmod +x backup-homes.sh restore-homes.sh
 
 msg_ok "Sweet Home 3D Online files downloaded"
 
-# Configuration prompts
-read -r -p "${TAB3}Enter port for Sweet Home 3D (default: 8080): " HOST_PORT
+# Configuration: use env vars if set, otherwise prompt interactively (only if stdin is a terminal)
+if [[ -n "${HOST_PORT:-}" ]]; then
+  : # already set via env
+elif [[ -t 0 ]]; then
+  read -r -p "${TAB3}Enter port for Sweet Home 3D (default: 8080): " HOST_PORT
+fi
 HOST_PORT=${HOST_PORT:-8080}
 
 # Check if authentication credentials were provided via environment variables
@@ -77,22 +93,23 @@ if [[ -n "${SH3D_AUTH_USERNAME}" ]] && [[ -n "${SH3D_AUTH_PASSWORD}" ]]; then
   AUTH_PASSWORD="${SH3D_AUTH_PASSWORD}"
   msg_ok "Credentials configured"
 else
-  # Interactive prompts as fallback
-  read -r -p "${TAB3}Enable HTTP Basic Authentication? <y/N>: " AUTH_PROMPT
+  # Interactive prompts as fallback (only if stdin is a terminal)
+  if [[ -t 0 ]]; then
+    read -r -p "${TAB3}Enable HTTP Basic Authentication? <y/N>: " AUTH_PROMPT
+  else
+    AUTH_PROMPT="n"
+  fi
   if [[ ${AUTH_PROMPT,,} =~ ^(y|yes)$ ]]; then
     AUTH_ENABLED=true
     read -r -p "${TAB3}Enter username (default: admin): " AUTH_USERNAME
     AUTH_USERNAME=${AUTH_USERNAME:-admin}
     read -r -sp "${TAB3}Enter password (leave empty to auto-generate): " AUTH_PASSWORD
     echo ""
-    
-    # Generate secure random password if not provided
     if [[ -z "${AUTH_PASSWORD}" ]]; then
       msg_info "Generating secure random password"
       AUTH_PASSWORD=$(openssl rand -base64 24 | tr -d "/=+" | cut -c1-24)
       msg_ok "Password generated: ${AUTH_PASSWORD}"
-      echo -e "${TAB3}${RD}⚠️  Save this password securely - it will be shown only once!${CL}"
-      sleep 3
+      echo -e "${TAB3}${RD}Save this password securely - it will be shown only once!${CL}"
     fi
   else
     AUTH_ENABLED=false
@@ -101,10 +118,14 @@ else
   fi
 fi
 
-read -r -p "${TAB3}Storage path (default: ./homes for local storage): " STORAGE_PATH
+if [[ -t 0 ]]; then
+  read -r -p "${TAB3}Storage path (default: ./homes for local storage): " STORAGE_PATH
+fi
 STORAGE_PATH=${STORAGE_PATH:-./homes}
 
-read -r -p "${TAB3}Max upload file size in MB (default: 50): " UPLOAD_SIZE
+if [[ -t 0 ]]; then
+  read -r -p "${TAB3}Max upload file size in MB (default: 50): " UPLOAD_SIZE
+fi
 UPLOAD_SIZE=${UPLOAD_SIZE:-50}
 
 # Create .env file
@@ -153,6 +174,9 @@ for i in {1..30}; do
 done
 msg_ok "Sweet Home 3D Online is ready"
 
-motd_ssh
-customize
-cleanup_lxc
+# community-scripts post-install hooks (only when framework is active)
+if [[ -n "$FUNCTIONS_FILE_PATH" ]]; then
+  motd_ssh
+  customize
+  cleanup_lxc
+fi
