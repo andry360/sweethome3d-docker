@@ -89,8 +89,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 EXPOSE 80
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f -o /dev/null -w "%{http_code}" http://localhost/ 2>/dev/null | grep -qE "^(200|401)$" || exit 1
 
 # Use custom entrypoint for dynamic configuration
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
