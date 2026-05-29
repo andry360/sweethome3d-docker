@@ -36,8 +36,8 @@ RUN echo "Building Sweet Home 3D 7.7-Online (this may take 10-20 minutes)..." &&
 RUN mkdir -p /deploy && \
     cp -r deployDirectHomeRecorder/* /deploy/ && \
     cp -r dist/* /deploy/ && \
-    cp -r lib/*.min.js /deploy/lib/ 2>/dev/null || true && \
-    cp -r lib/*.css /deploy/lib/ 2>/dev/null || true
+    mkdir -p /deploy/lib && \
+    cp -r lib/. /deploy/lib/ 2>/dev/null || true
 
 # Stage 2: Runtime Environment (PHP + Apache)
 FROM php:8.2-apache
