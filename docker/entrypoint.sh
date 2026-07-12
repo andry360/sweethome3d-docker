@@ -26,8 +26,22 @@ fi
 if [ "${AUTH_ENABLED}" = "true" ]; then
     echo "🔒 Configuring HTTP Basic Authentication..."
     
+    # Validate that username and password are not empty
+    if [ -z "${AUTH_USERNAME}" ]; then
+        echo "❌ ERROR: AUTH_USERNAME is empty but AUTH_ENABLED=true"
+        echo "Please set AUTH_USERNAME environment variable"
+        exit 1
+    fi
+    
+    if [ -z "${AUTH_PASSWORD}" ]; then
+        echo "❌ ERROR: AUTH_PASSWORD is empty but AUTH_ENABLED=true"
+        echo "Please set AUTH_PASSWORD environment variable"
+        echo "Hint: Generate a secure password with: openssl rand -base64 24"
+        exit 1
+    fi
+    
     # Create .htpasswd file with credentials
-    htpasswd -cb /var/www/.htpasswd "${AUTH_USERNAME:-admin}" "${AUTH_PASSWORD:-changeme}"
+    htpasswd -cb /var/www/.htpasswd "${AUTH_USERNAME}" "${AUTH_PASSWORD}"
     
     # Enable authentication in .htaccess
     cat > /var/www/html/.htaccess << 'EOF'

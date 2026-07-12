@@ -46,11 +46,11 @@ services:
       - sweethome3d_network
     
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/"]
+      test: ["CMD", "curl", "-f", "-o", "/dev/null", "-w", "%{http_code}", "-s", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
     
     labels:
       - "com.centurylinklabs.watchtower.enable=true"

@@ -63,8 +63,9 @@ curl -fsSL \
   -o "${INSTALL_TMP}"
 
 # Prepend credentials export so they are available inside the container
-sed -i "1a export SH3D_AUTH_USERNAME='${SH3D_AUTH_USERNAME}'" "${INSTALL_TMP}"
-sed -i "2a export SH3D_AUTH_PASSWORD='${SH3D_AUTH_PASSWORD}'" "${INSTALL_TMP}"
+# Use printf to safely escape special characters
+sed -i "1a export SH3D_AUTH_USERNAME=$(printf '%s\n' "${SH3D_AUTH_USERNAME}" | sed -e 's/[\&/]/\\&/g')" "${INSTALL_TMP}"
+sed -i "2a export SH3D_AUTH_PASSWORD=$(printf '%s\n' "${SH3D_AUTH_PASSWORD}" | sed -e 's/[\&/]/\\&/g')" "${INSTALL_TMP}"
 
 chmod +x "${INSTALL_TMP}"
 msg_ok "Installation script prepared"

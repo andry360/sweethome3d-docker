@@ -43,7 +43,13 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/andry360/sweethome3d-do
 **With custom authentication credentials:**
 
 ```bash
+# IMPORTANT: Replace 'myuser' and 'MyStr0ng!P@ssw0rd' with your OWN credentials!
 SH3D_AUTH_USERNAME=myuser SH3D_AUTH_PASSWORD='MyStr0ng!P@ssw0rd' bash -c "$(wget -qLO - https://raw.githubusercontent.com/andry360/sweethome3d-docker/refs/heads/main/ct/sweethome3d.sh)"
+```
+
+⚠️ **NEVER commit or share these credentials. Generate strong passwords:**
+```bash
+openssl rand -base64 24 | tr -d "/=+" | cut -c1-24
 ```
 
 ⚠️ **Security Note:** When enabling authentication, either:
@@ -127,7 +133,13 @@ Projects are stored in `./homes` directory within the project folder.
 Pass credentials as environment variables during installation:
 
 ```bash
+# IMPORTANT: Use YOUR OWN strong password, never share these credentials!
 SH3D_AUTH_USERNAME=yourusername SH3D_AUTH_PASSWORD='YourStr0ng!Password' bash -c "$(wget -qLO - https://raw.githubusercontent.com/andry360/sweethome3d-docker/main/ct/sweethome3d.sh)"
+```
+
+**Generate a strong password:**
+```bash
+openssl rand -base64 24 | tr -d "/=+" | cut -c1-24
 ```
 
 Or follow interactive prompts and leave password empty for auto-generation.
@@ -245,42 +257,100 @@ sweethome3d-docker/
 
 ## 🔧 Troubleshooting
 
-### Container won't start
+### ⚠️ Important: noVNC vs Web Authentication
+
+**noVNC is NOT the same as SweetHome3D web authentication!**
+
+- **noVNC** = Console/SSH access to the container (like VNC desktop)
+- **SweetHome3D Authentication** = Username/password to access the web application
+
+If you can't login via noVNC:
+- You're trying to access the container console, not the web app
+- Use SSH instead: `ssh root@192.168.4.25` or `pct enter <CTID>`
+- For the web app, open `http://192.168.4.25:8080` in your browser
+
+### Browser shows "Connection refused" (192.168.4.25:8080)
+
+**Diagnostics:**
+1. Check if container is running:
+   ```bash
+   pct exec <CTID> -- docker compose -C /opt/sweethome3d ps
+   ```
+   Expected: Status shows "Up"
+
+2. Check if Apache is listening:
+   ```bash
+   pct exec <CTID> -- curl -I http://localhost:80
+   ```
+   Expected: HTTP/1.1 200 OK or HTTP/1.1 401 Unauthorized (if auth enabled)
+
+3. Check container IP and connectivity:
+   ```bash
+   pct exec <CTID> -- hostname -I
+   ping 192.168.4.25  # Run this from another machine
+   ```
+
+**Fixes:**
+- Rebuild container: `pct exec <CTID> -- docker compose -C /opt/sweethome3d down && docker compose -C /opt/sweethome3d build && docker compose -C /opt/sweethome3d up -d`
+- Check Proxmox firewall: `pct config <CTID> | grep firewall`
+- Increase container resources if build failed: `pct set <CTID> --cores 4 --memory 4096`
+
+### Browser shows "401 Unauthorized" when accessing the web interface
+
+**This is normal if authentication is enabled!**
+
+1. Check if credentials match:
+   ```bash
+   pct exec <CTID> -- cat /opt/sweethome3d/.env | grep AUTH
+   ```
+
+2. Test with curl:
+   ```bash
+   # Should get 200 OK with correct credentials
+   curl -I --user admin:YOUR_PASSWORD http://192.168.4.25:8080/
+   ```
+
+3. If password doesn't work:
+   - The password might not have been set correctly during installation
+   - Recreate container with credentials: `SH3D_AUTH_USERNAME=admin SH3D_AUTH_PASSWORD='YourPassword123!' bash -c "$(wget -qLO - ...)"`
+   - Or edit `.env` and restart: `docker-compose restart`
+
+### Container won't start / Build fails
+
 Check logs:
 ```bash
-docker-compose logs
+pct exec <CTID> -- docker compose -C /opt/sweethome3d logs --tail=100
 ```
 
 Common issues:
 - Port 8080 already in use → Change `HOST_PORT` in `.env`
-- Storage permission errors → Check directory permissions
-- Build failures → Ensure Java 11+ and Ant are available
+- Build takes too long (20-30 min) → Wait longer or increase container resources
+- Out of memory during build → Allocate more RAM: `pct set <CTID> --memory 4096`
+- SVN checkout fails → Check internet connectivity
+- Storage permission errors → Ensure storage path is writable
 
-### Cannot upload projects
-1. Check PHP upload limits in `.env`
+### Cannot upload or save projects
+
+1. Check PHP upload limits in `.env`:
+   ```
+   UPLOAD_MAX_FILESIZE=50M
+   POST_MAX_SIZE=50M
+   ```
+
 2. Verify storage directory permissions:
    ```bash
-   chmod 755 ./homes
+   pct exec <CTID> -- ls -la /opt/sweethome3d/homes
+   # Should show: drwxr-xr-x ... homes
    ```
 
-### Authentication not working
-1. Verify `AUTH_ENABLED=true` in `.env`
-2. Check credentials are correctly set (no typos, proper escaping)
-3. Check Apache configuration in `docker/apache-config.conf`
-4. Ensure .htaccess is properly loaded
-5. Try regenerating password:
+3. Check disk space:
    ```bash
-   # Edit .env and change AUTH_PASSWORD
-   docker-compose restart
+   pct exec <CTID> -- df -h /opt/sweethome3d/
    ```
 
-### Build takes too long
-The first build compiles Sweet Home 3D from Java to JavaScript using JSweet, which can take 10-20 minutes depending on your system. Subsequent builds are faster thanks to Docker layer caching.
+### For detailed troubleshooting
 
-To use pre-built images (when available):
-```bash
-docker pull yourusername/sweethome3d-online:7.7
-```
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for comprehensive diagnosis steps and debug commands.
 
 ## 🔒 Security Recommendations
 
@@ -298,6 +368,10 @@ docker pull yourusername/sweethome3d-online:7.7
 6. **Backup regularly** - automate backups with cron
 7. **Monitor logs** - check for suspicious activity
 8. **Rotate passwords** - change authentication passwords periodically
+
+**For detailed security information, see:**
+- 📋 **[SECURITY-AUDIT.md](SECURITY-AUDIT.md)** - Complete security analysis and production hardening guide
+- 🔐 **[SECURITY.md](SECURITY.md)** - Developer guidelines and contribution security requirements
 
 ## 📚 Additional Resources
 

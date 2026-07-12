@@ -92,7 +92,13 @@ if [[ -n "${SH3D_AUTH_USERNAME}" ]] && [[ -n "${SH3D_AUTH_PASSWORD}" ]]; then
   AUTH_ENABLED=true
   AUTH_USERNAME="${SH3D_AUTH_USERNAME}"
   AUTH_PASSWORD="${SH3D_AUTH_PASSWORD}"
-  msg_ok "Credentials configured"
+  
+  # Validate password is secure enough
+  if [[ ${#SH3D_AUTH_PASSWORD} -lt 8 ]]; then
+    msg_error "Password is too short. Minimum 8 characters required for security."
+  fi
+  
+  msg_ok "Credentials configured (username: ${AUTH_USERNAME})"
 else
   # Interactive prompts as fallback (only if stdin is a terminal)
   if [[ -t 0 ]]; then
